@@ -1,0 +1,27 @@
+name: OSS Health Check
+description: Check repository readiness and publish a health report to the job summary.
+author: HPnetwork
+inputs:
+  path:
+    description: Repository path to scan.
+    required: false
+    default: .
+  strict:
+    description: Fail the job when a secret is detected.
+    required: false
+    default: 'true'
+runs:
+  using: composite
+  steps:
+    - name: Run repository checks
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_STRICT: ${{ inputs.strict }}
+      run: |
+        set -o pipefail
+        args=("$INPUT_PATH" --format markdown)
+        if [[ "$INPUT_STRICT" == "true" ]]; then args+=(--strict); fi
+        python3 -m pip install --disable-pip-version-check --quiet "$GITHUB_ACTION_PATH"
+        python3 -m oss_health_check "${args[@]}" | tee /tmp/oss-health-check.md
+        cat /tmp/oss-health-check.md >> "$GITHUB_STEP_SUMMARY"
