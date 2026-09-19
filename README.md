@@ -25,7 +25,7 @@ For AI-heavy repositories, the scanner catches common provider key shapes before
 Requires Python 3.10 or newer.
 
 ```sh
-python -m pip install oss-health-check
+python -m pip install git+https://github.com/HP-network/oss-health-check.git
 oss-health-check .
 oss-health-check . --format markdown > health-report.md
 oss-health-check . --format json > health-report.json
