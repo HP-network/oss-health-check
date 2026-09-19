@@ -48,3 +48,23 @@ def as_markdown(report: Report) -> str:
     if report.secrets:
         lines.append("- Possible secrets: " + ", ".join(f"`{path}`" for path in report.secrets))
     return "\n".join(lines) + "\n"
+
+
+def as_sarif(report: Report) -> str:
+    results = []
+    for check in report.checks:
+        if check.severity not in (Severity.WARN, Severity.FAIL):
+            continue
+        results.append({
+            "ruleId": check.key,
+            "level": "error" if check.severity == Severity.FAIL else "warning",
+            "message": {"text": check.message},
+        })
+    return json.dumps({
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {"driver": {"name": "oss-health-check", "informationUri": "https://github.com/HP-network/oss-health-check"}},
+            "results": results,
+        }],
+    }, indent=2)

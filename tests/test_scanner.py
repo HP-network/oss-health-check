@@ -38,3 +38,15 @@ class ScannerTest(unittest.TestCase):
 
             self.assertEqual(report.secrets, ("config.env",))
             self.assertTrue(any(check.key == "secrets" and check.severity.value == "fail" for check in report.checks))
+
+    def test_reports_ai_provider_secret(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write(root / "README.md")
+            write(root / "settings.env", "OPENAI_API_KEY=sk-" + "a" * 32)
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            subprocess.run(["git", "add", "README.md", "settings.env"], cwd=root, check=True)
+
+            report = scan(root)
+
+            self.assertEqual(report.secrets, ("settings.env",))

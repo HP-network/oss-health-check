@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from oss_health_check.report import as_json, as_markdown
+from oss_health_check.report import as_json, as_markdown, as_sarif
 from oss_health_check.scanner import scan
 
 
@@ -19,3 +19,4 @@ class ReportTest(unittest.TestCase):
             self.assertIn('"score"', payload)
             self.assertIn("## Checks", markdown)
             self.assertIn("README", markdown)
+            self.assertIn('"version": "2.1.0"', as_sarif(report))

@@ -4,7 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from .report import as_json, as_markdown
+from .report import as_json, as_markdown, as_sarif
 from .scanner import scan
 
 
@@ -14,7 +14,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Check whether a local repository is ready to share and maintain.",
     )
     parser.add_argument("path", nargs="?", default=".", help="repository directory (default: current directory)")
-    parser.add_argument("--format", choices=("text", "json", "markdown"), default="text")
+    parser.add_argument("--format", choices=("text", "json", "markdown", "sarif"), default="text")
     parser.add_argument("--strict", action="store_true", help="exit 1 when a check fails")
     return parser
 
@@ -31,6 +31,8 @@ def main(argv: list[str] | None = None) -> int:
         print(as_json(report))
     elif args.format == "markdown":
         print(as_markdown(report), end="")
+    elif args.format == "sarif":
+        print(as_sarif(report))
     else:
         _print_text(report)
     return 1 if args.strict and report.failures else 0

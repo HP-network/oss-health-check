@@ -12,6 +12,9 @@ SECRET_PATTERNS = (
     re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     re.compile(r"(?i)\baws_secret_access_key\s*[:=]\s*['\"]?[A-Za-z0-9/+=]{16,}"),
     re.compile(r"(?i)\bgithub_pat_[A-Za-z0-9_]{20,}"),
+    re.compile(r"(?i)\bsk-[A-Za-z0-9_-]{20,}"),
+    re.compile(r"(?i)\b(?:xai|hf|pplx|r8|AIza)[_-][A-Za-z0-9_-]{16,}"),
+    re.compile(r"(?i)\b(?:openai|anthropic|gemini|azure_openai|ollama)_[A-Za-z0-9_]*key\s*[:=]"),
 )
 
 
