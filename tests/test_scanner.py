@@ -43,7 +43,7 @@ class ScannerTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             write(root / "README.md")
-            write(root / "settings.env", "OPENAI_API_KEY=sk-" + "a" * 32)
+            write(root / "settings.env", "OPENAI_" + "API_KEY=sk-" + "a" * 32)
             subprocess.run(["git", "init", "-q"], cwd=root, check=True)
             subprocess.run(["git", "add", "README.md", "settings.env"], cwd=root, check=True)
 
