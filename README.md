@@ -31,9 +31,10 @@ oss-health-check . --format markdown > health-report.md
 oss-health-check . --format json > health-report.json
 oss-health-check . --format sarif > health-report.sarif
 oss-health-check . --strict
+oss-health-check . --min-score 90
 ```
 
-`--strict` exits with status 1 when a possible secret is detected. Other warnings remain visible without making a normal run fail.
+`--strict` exits with status 1 when a possible secret is detected. Use `--min-score 90` (or another value from 0 to 100) when warnings should also block a release.
 
 ## GitHub Action
 
@@ -50,6 +51,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: HP-network/oss-health-check@v2
+        with:
+          min-score: '90'
 ```
 
 The action appends a Markdown report to the job summary. Set `strict: 'false'` when the report is informational only.

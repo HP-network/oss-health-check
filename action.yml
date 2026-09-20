@@ -10,6 +10,10 @@ inputs:
     description: Fail the job when a secret is detected.
     required: false
     default: 'true'
+  min-score:
+    description: Fail the job when the repository score is below this value (0-100).
+    required: false
+    default: '0'
   format:
     description: Report format: markdown or sarif.
     required: false
@@ -26,10 +30,12 @@ runs:
       env:
         INPUT_PATH: ${{ inputs.path }}
         INPUT_STRICT: ${{ inputs.strict }}
+        INPUT_MIN_SCORE: ${{ inputs['min-score'] }}
       run: |
         set -o pipefail
         args=("$INPUT_PATH" --format "${{ inputs.format }}")
         if [[ "$INPUT_STRICT" == "true" ]]; then args+=(--strict); fi
+        if [[ -n "$INPUT_MIN_SCORE" && "$INPUT_MIN_SCORE" != "0" ]]; then args+=(--min-score "$INPUT_MIN_SCORE"); fi
         python3 -m pip install --disable-pip-version-check --quiet "$GITHUB_ACTION_PATH"
         python3 -m oss_health_check "${args[@]}" | tee "/tmp/oss-health-check.${{ inputs.format }}"
         if [[ "${{ inputs.format }}" == "markdown" ]]; then

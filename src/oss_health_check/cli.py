@@ -16,6 +16,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("path", nargs="?", default=".", help="repository directory (default: current directory)")
     parser.add_argument("--format", choices=("text", "json", "markdown", "sarif"), default="text")
     parser.add_argument("--strict", action="store_true", help="exit 1 when a check fails")
+    parser.add_argument(
+        "--min-score",
+        type=_score,
+        metavar="0-100",
+        help="exit 1 when the repository score is below this threshold",
+    )
     return parser
 
 
@@ -35,7 +41,16 @@ def main(argv: list[str] | None = None) -> int:
         print(as_sarif(report))
     else:
         _print_text(report)
-    return 1 if args.strict and report.failures else 0
+    failed_checks = args.strict and bool(report.failures)
+    below_threshold = args.min_score is not None and report.score < args.min_score
+    return 1 if failed_checks or below_threshold else 0
+
+
+def _score(value: str) -> int:
+    score = int(value)
+    if not 0 <= score <= 100:
+        raise argparse.ArgumentTypeError("score must be between 0 and 100")
+    return score
 
 
 def _print_text(report) -> None:
