@@ -15,6 +15,7 @@ Small, dependency-free checks for the things that make a repository easier to pu
 - common private-key and token patterns in tracked text files
 - common AI provider key patterns (OpenAI-compatible, Anthropic, Gemini, Azure, Ollama, Hugging Face, and xAI)
 - tracked files larger than 5 MiB
+- optionally enforce commit-SHA pins for third-party GitHub Actions
 
 The score is a prioritization aid, not a security certification. Secret detection is deliberately conservative and should be followed by a proper secret scanner for production use.
 
@@ -34,7 +35,7 @@ oss-health-check . --strict
 oss-health-check . --min-score 90
 ```
 
-`--strict` exits with status 1 when a possible secret is detected. Use `--min-score 90` (or another value from 0 to 100) when warnings should also block a release.
+`--strict` exits with status 1 when a possible secret is detected. Use `--min-score 90` (or another value from 0 to 100) when warnings should also block a release. Use `--strict-workflow-pins` to require every third-party action to use a full commit SHA instead of a mutable tag.
 
 ## GitHub Action
 
@@ -53,6 +54,7 @@ jobs:
       - uses: HP-network/oss-health-check@v2
         with:
           min-score: '90'
+          strict-workflow-pins: 'true'
 ```
 
 The action appends a Markdown report to the job summary. Set `strict: 'false'` when the report is informational only.

@@ -14,6 +14,10 @@ inputs:
     description: Fail the job when the repository score is below this value (0-100).
     required: false
     default: '0'
+  strict-workflow-pins:
+    description: Fail when third-party workflow actions are not pinned to commit SHAs.
+    required: false
+    default: 'false'
   format:
     description: Report format: markdown or sarif.
     required: false
@@ -31,11 +35,13 @@ runs:
         INPUT_PATH: ${{ inputs.path }}
         INPUT_STRICT: ${{ inputs.strict }}
         INPUT_MIN_SCORE: ${{ inputs['min-score'] }}
+        INPUT_STRICT_WORKFLOW_PINS: ${{ inputs['strict-workflow-pins'] }}
       run: |
         set -o pipefail
         args=("$INPUT_PATH" --format "${{ inputs.format }}")
         if [[ "$INPUT_STRICT" == "true" ]]; then args+=(--strict); fi
         if [[ -n "$INPUT_MIN_SCORE" && "$INPUT_MIN_SCORE" != "0" ]]; then args+=(--min-score "$INPUT_MIN_SCORE"); fi
+        if [[ "$INPUT_STRICT_WORKFLOW_PINS" == "true" ]]; then args+=(--strict-workflow-pins); fi
         python3 -m pip install --disable-pip-version-check --quiet "$GITHUB_ACTION_PATH"
         python3 -m oss_health_check "${args[@]}" | tee "/tmp/oss-health-check.${{ inputs.format }}"
         if [[ "${{ inputs.format }}" == "markdown" ]]; then

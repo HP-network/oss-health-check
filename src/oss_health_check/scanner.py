@@ -16,9 +16,11 @@ SECRET_PATTERNS = (
     re.compile(r"(?i)\b(?:xai|hf|pplx|r8|AIza)[_-][A-Za-z0-9_-]{16,}"),
     re.compile(r"(?i)\b(?:openai|anthropic|gemini|azure_openai|ollama)_[A-Za-z0-9_]*key\s*[:=]"),
 )
+ACTION_SHA = re.compile(r"^[0-9a-fA-F]{40}$")
+ACTION_USE = re.compile(r"^\s*(?:-\s*)?uses:\s*([^\s#]+)")
 
 
-def scan(root: str | Path = ".") -> Report:
+def scan(root: str | Path = ".", *, strict_workflow_pins: bool = False) -> Report:
     path = Path(root).expanduser().resolve()
     if not path.is_dir():
         raise ValueError(f"not a directory: {path}")
@@ -32,6 +34,7 @@ def scan(root: str | Path = ".") -> Report:
         _security_policy_check(path),
         _code_of_conduct_check(path),
         _ci_check(path),
+        _workflow_pin_check(path, strict_workflow_pins),
         _ignore_check(path),
         _tests_check(path),
         _metadata_check(path),
@@ -44,6 +47,41 @@ def scan(root: str | Path = ".") -> Report:
     branch = _git_output(path, ["branch", "--show-current"]) or None
     dirty = bool(_git_output(path, ["status", "--porcelain"]))
     return Report(path, tuple(checks), len(files), len(tracked), large, secrets, dirty, branch)
+
+
+def _workflow_pin_check(root: Path, strict: bool) -> Check:
+    workflow_dir = root / ".github" / "workflows"
+    workflows = list(workflow_dir.glob("*.yml")) + list(workflow_dir.glob("*.yaml")) if workflow_dir.is_dir() else []
+    if not workflows:
+        return Check("workflow-pins", "Workflow action pins", Severity.INFO, 0, "no workflow files found")
+
+    unpinned: list[str] = []
+    for workflow in workflows:
+        try:
+            lines = workflow.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            continue
+        for line_number, line in enumerate(lines, 1):
+            if line.lstrip().startswith("#"):
+                continue
+            match = ACTION_USE.match(line)
+            if not match:
+                continue
+            action = match.group(1).strip().strip('"\'')
+            if action.startswith(("./", "docker://")):
+                continue
+            ref = action.rsplit("@", 1)[-1] if "@" in action else ""
+            if not ACTION_SHA.fullmatch(ref):
+                unpinned.append(f"{workflow.relative_to(root)}:{line_number} ({action})")
+
+    if not unpinned:
+        return Check("workflow-pins", "Workflow action pins", Severity.PASS, 2, "third-party actions are pinned to commit SHAs")
+    level = Severity.FAIL if strict else Severity.INFO
+    message = "unpinned workflow actions: " + ", ".join(unpinned[:3])
+    if len(unpinned) > 3:
+        message += f" (+{len(unpinned) - 3} more)"
+    suggestion = "Pin each third-party action to a full 40-character commit SHA and document the release tag in a comment."
+    return Check("workflow-pins", "Workflow action pins", level, 0, message, suggestion)
 
 
 def _documentation_check(root: Path) -> Check:

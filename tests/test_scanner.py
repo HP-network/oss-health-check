@@ -50,3 +50,21 @@ class ScannerTest(unittest.TestCase):
             report = scan(root)
 
             self.assertEqual(report.secrets, ("settings.env",))
+
+    def test_workflow_action_pins_are_opt_in(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write(root / "README.md")
+            write(root / ".github" / "workflows" / "ci.yml", "steps:\n  - uses: actions/checkout@v4\n")
+
+            report = scan(root)
+            self.assertFalse(report.failures)
+            self.assertEqual(report.checks[6].key, "workflow-pins")
+            self.assertEqual(report.checks[6].severity.value, "info")
+
+            strict_report = scan(root, strict_workflow_pins=True)
+            self.assertEqual([check.key for check in strict_report.failures], ["workflow-pins"])
+
+            write(root / ".github" / "workflows" / "ci.yml", "steps:\n  - uses: actions/checkout@0123456789abcdef0123456789abcdef01234567\n")
+            pinned_report = scan(root, strict_workflow_pins=True)
+            self.assertFalse(pinned_report.failures)

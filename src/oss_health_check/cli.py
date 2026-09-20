@@ -22,13 +22,18 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="0-100",
         help="exit 1 when the repository score is below this threshold",
     )
+    parser.add_argument(
+        "--strict-workflow-pins",
+        action="store_true",
+        help="fail when a third-party GitHub Action is not pinned to a commit SHA",
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        report = scan(Path(args.path))
+        report = scan(Path(args.path), strict_workflow_pins=args.strict_workflow_pins)
     except ValueError as error:
         print(f"oss-health-check: {error}", file=sys.stderr)
         return 2
