@@ -1,6 +1,6 @@
 """Repository readiness checks for local projects."""
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 from .model import Check, Report, Severity
 from .scanner import scan

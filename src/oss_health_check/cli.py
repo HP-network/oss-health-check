@@ -46,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
         print(as_sarif(report))
     else:
         _print_text(report)
-    failed_checks = args.strict and bool(report.failures)
+    failed_checks = (args.strict or args.strict_workflow_pins) and bool(report.failures)
     below_threshold = args.min_score is not None and report.score < args.min_score
     return 1 if failed_checks or below_threshold else 0
 

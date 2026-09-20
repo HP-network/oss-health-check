@@ -26,3 +26,14 @@ class CliTest(unittest.TestCase):
             with self.assertRaises(SystemExit) as error:
                 main([str(root), "--min-score", "101"])
             self.assertEqual(error.exception.code, 2)
+
+    def test_workflow_pin_flag_fails_without_generic_strict_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / ".github" / "workflows").mkdir(parents=True)
+            (root / ".github" / "workflows" / "ci.yml").write_text(
+                "steps:\n  - uses: actions/checkout@v4\n",
+                encoding="utf-8",
+            )
+            with redirect_stdout(StringIO()):
+                self.assertEqual(main([str(root), "--strict-workflow-pins"]), 1)
